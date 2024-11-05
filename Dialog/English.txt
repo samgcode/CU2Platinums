@@ -1,0 +1,4 @@
+CU2PLATINUMS_ENABLE_SILVER_TRAIN= Enable silver train
+
+CU2PLATINUMS_SETPOSITION= Set platinum position
+CU2PLATINUMS_RESETPOSITION= Reset position to default

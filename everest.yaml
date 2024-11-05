@@ -1,0 +1,10 @@
+- Name: CU2Platinums
+  Version: 0.6.0
+  DLL: bin/CU2Platinums.dll
+  Dependencies:
+    - Name: EverestCore
+      Version: 1.4673.0
+    - Name: PlatinumStrawberry
+      Version: 1.1.1.0
+    - Name: CollabUtils2
+      Version: 1.10.13
