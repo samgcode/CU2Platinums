@@ -46,6 +46,12 @@ public class CU2PlatinumsModule : EverestModule
         { "SecretSanta2024/0-Lobbies/1-Easy", new Vector2(1431, 531) },
         { "SecretSanta2024/0-Lobbies/2-Medium", new Vector2(1272, 1129) },
         { "SecretSanta2024/0-Lobbies/3-Hard", new Vector2(619, 305) },
+
+        { "SpringCollab2020/0-Lobbies/1-Beginner", new Vector2(1010, 1670) },
+        { "SpringCollab2020/0-Lobbies/2-Intermediate", new Vector2(1355, 2335) },
+        { "SpringCollab2020/0-Lobbies/3-Advanced", new Vector2(1368, 946) },
+        { "SpringCollab2020/0-Lobbies/4-Expert", new Vector2(1452, 552) },
+        { "SpringCollab2020/0-Lobbies/5-Grandmaster", new Vector2(1394, 1098) },
     };
 
     public static int mapsInLobby = 0;
