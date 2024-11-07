@@ -231,8 +231,10 @@ public class CU2PlatinumsModule : EverestModule
 
             silversSpawned = 0;
 
+            Logger.Log(LogLevel.Info, "CU2PlatinumsModule", "force door state 1");
             if (InLobby(level.Session))
             {
+                Logger.Log(LogLevel.Info, "CU2PlatinumsModule", "force door state 2");
                 forceDoorState(level, player);
             }
         }
@@ -266,8 +268,10 @@ public class CU2PlatinumsModule : EverestModule
         MiniHeartDoor heartDoor = level.Entities.FindFirst<MiniHeartDoor>();
         if (heartDoor != null)
         {
+            Logger.Log(LogLevel.Info, "CU2PlatinumsModule", "force door state 3");
             if (!lobbyCompleted())
             {
+                Logger.Log(LogLevel.Info, "CU2PlatinumsModule", "force door state 4");
                 heartDoor.Opened = false;
                 mapsInLobby = heartDoor.Requires;
                 level.Session.SetFlag("opened_heartgem_door_" + heartDoor.Requires, false);
@@ -296,8 +300,10 @@ public class CU2PlatinumsModule : EverestModule
 
     public static int onGetHeartCount(Func<Delegate, HeartGemDoor, int> orig, Delegate orig_orig, HeartGemDoor door)
     {
+        Logger.Log(LogLevel.Info, "CU2PlatinumsModule", $"mapsCompleted: {mapsCompleted.Count}");
         if (platEntity != null)
         {
+            Logger.Log(LogLevel.Info, "CU2PlatinumsModule", $"test mapsCompleted: {mapsCompleted.Count}");
             return mapsCompleted.Count;
         }
         return orig(orig_orig, door);
@@ -496,7 +502,8 @@ public class CU2PlatinumsModule : EverestModule
 
     public static bool lobbyCompleted()
     {
-        return mapsCompleted.Count >= mapsInLobby;
+        Logger.Log(LogLevel.Info, "CU2PlatinumsModule", $"mapsCompleted: {mapsCompleted.Count}, mapsInLobby: {mapsInLobby}");
+        return (mapsInLobby != 0) && mapsCompleted.Count >= mapsInLobby;
     }
 
     public static void reset()
