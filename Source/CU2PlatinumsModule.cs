@@ -52,6 +52,8 @@ public class CU2PlatinumsModule : EverestModule
         { "SpringCollab2020/0-Lobbies/3-Advanced", new Vector2(1368, 946) },
         { "SpringCollab2020/0-Lobbies/4-Expert", new Vector2(1452, 552) },
         { "SpringCollab2020/0-Lobbies/5-Grandmaster", new Vector2(1394, 1098) },
+
+        { "BeginnerCollab/0-Lobbies/1-MainLobby", new Vector2(672, 2808) },
     };
 
     public static int mapsInLobby = 0;
