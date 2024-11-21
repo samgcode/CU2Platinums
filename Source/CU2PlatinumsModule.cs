@@ -8,6 +8,7 @@ using Celeste.Mod.CollabUtils2.UI;
 using Celeste.Mod.CollabUtils2.Entities;
 using Celeste.Mod.CollabUtils2.Triggers;
 using Monocle;
+using Celeste.Mod.CU2Platinums.PacePing;
 
 namespace Celeste.Mod.CU2Platinums;
 
@@ -73,6 +74,9 @@ public class CU2PlatinumsModule : EverestModule
     public static bool paused = false;
 
     public static string currentLobby = null;
+    public static string currentMap = null;
+    public static string currentMapClean = null;
+
     public static List<string> mapsCompleted = new List<string>();
 
     public CU2PlatinumsModule()
@@ -126,17 +130,26 @@ public class CU2PlatinumsModule : EverestModule
     {
         paused = false;
 
+        AreaData area = AreaData.Areas[self.Level.Session.Area.ID];
+        currentMap = self.Level.Session.Area.GetSID();
+        currentMapClean = area.Name.DialogCleanOrNull() ?? area.Name.SpacedPascalCase();
+
         if (InLobby(self.Level.Session))
         {
-            string newLobby = self.Level.Session.Area.GetSID();
+            string newLobby = currentMap;
             if (currentLobby != null && newLobby != currentLobby)
             {
                 reset();
             }
             currentLobby = newLobby;
-
+            PacePingManager.SetCampaignName(currentMapClean, Dialog.CleanLevelSet(area.LevelSet));
         }
         shouldUpdate = true;
+
+        if (platEntity != null)
+        {
+            PacePingManager.OnEnter(currentMap, currentMapClean);
+        }
 
         orig(self);
     }
@@ -192,9 +205,9 @@ public class CU2PlatinumsModule : EverestModule
             {
                 try
                 {
+                    forceDoorState(level, player);
                     LobbyVisitManager visitManager = level.Tracker.GetEntity<LobbyMapController>().VisitManager;
                     visitManager.Reset();
-                    forceDoorState(level, player);
                 }
                 catch (Exception e)
                 {
@@ -233,10 +246,8 @@ public class CU2PlatinumsModule : EverestModule
 
             silversSpawned = 0;
 
-            Logger.Log(LogLevel.Info, "CU2PlatinumsModule", "force door state 1");
             if (InLobby(level.Session))
             {
-                Logger.Log(LogLevel.Info, "CU2PlatinumsModule", "force door state 2");
                 forceDoorState(level, player);
             }
         }
@@ -270,10 +281,8 @@ public class CU2PlatinumsModule : EverestModule
         MiniHeartDoor heartDoor = level.Entities.FindFirst<MiniHeartDoor>();
         if (heartDoor != null)
         {
-            Logger.Log(LogLevel.Info, "CU2PlatinumsModule", "force door state 3");
             if (!lobbyCompleted())
             {
-                Logger.Log(LogLevel.Info, "CU2PlatinumsModule", "force door state 4");
                 heartDoor.Opened = false;
                 mapsInLobby = heartDoor.Requires;
                 level.Session.SetFlag("opened_heartgem_door_" + heartDoor.Requires, false);
@@ -302,10 +311,8 @@ public class CU2PlatinumsModule : EverestModule
 
     public static int onGetHeartCount(Func<Delegate, HeartGemDoor, int> orig, Delegate orig_orig, HeartGemDoor door)
     {
-        Logger.Log(LogLevel.Info, "CU2PlatinumsModule", $"mapsCompleted: {mapsCompleted.Count}");
         if (platEntity != null)
         {
-            Logger.Log(LogLevel.Info, "CU2PlatinumsModule", $"test mapsCompleted: {mapsCompleted.Count}");
             return mapsCompleted.Count;
         }
         return orig(orig_orig, door);
@@ -329,6 +336,7 @@ public class CU2PlatinumsModule : EverestModule
     {
         if (platEntity != null)
         {
+            PacePingManager.OnDeath(currentMapClean);
             returnToLobby = true;
             reset();
             CollabModule.Instance.Session.LobbySID = null;
@@ -367,6 +375,8 @@ public class CU2PlatinumsModule : EverestModule
             {
                 saveSilvers(player);
             }
+
+            PacePingManager.OnComplete(currentMap, currentMapClean);
         }
 
         return orig(self, player, level);
@@ -380,6 +390,9 @@ public class CU2PlatinumsModule : EverestModule
             {
                 platFollower.Leader.Followers.Remove(platFollower);
             }
+
+            mapsCompleted.Add(currentMap);
+            PacePingManager.OnComplete(currentMap, currentMapClean);
 
             reset();
         }
@@ -504,7 +517,6 @@ public class CU2PlatinumsModule : EverestModule
 
     public static bool lobbyCompleted()
     {
-        Logger.Log(LogLevel.Info, "CU2PlatinumsModule", $"mapsCompleted: {mapsCompleted.Count}, mapsInLobby: {mapsInLobby}");
         return (mapsInLobby != 0) && mapsCompleted.Count >= mapsInLobby;
     }
 
@@ -519,6 +531,8 @@ public class CU2PlatinumsModule : EverestModule
 
     private static bool InLobby(Session session)
     {
+
+
         return LobbyHelper.IsCollabLobby(session.Area.GetSID());
     }
 

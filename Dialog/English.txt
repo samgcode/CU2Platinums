@@ -2,3 +2,17 @@ CU2PLATINUMS_ENABLE_SILVER_TRAIN= Enable silver train
 
 CU2PLATINUMS_SETPOSITION= Set platinum position
 CU2PLATINUMS_RESETPOSITION= Reset position to default
+
+CU2PLATINUMS_PACE_PING= Pace Ping
+CU2PLATINUMS_PACE_PING_DESC= Pace Ping Settings
+
+CU2PLATINUMS_PACE_PING_ENABLED= Pace Ping Enabled
+CU2PLATINUMS_PACE_PING_ENABLED_DESC= Globally enable or disable pace ping
+CU2PLATINUMS_PACE_PING_IMPORT_WEBHOOK= Import Webhook From Clipboard
+CU2PLATINUMS_PACE_PING_IMPORT_WEBHOOK_DESC= Import discord webhook url from clipboard
+CU2PLATINUMS_PACE_PING_BOT_USERNAME= Set Bot Username
+CU2PLATINUMS_PACE_PING_BOT_USERNAME_DESC= Import the username to display for pace pings from clipboard
+CU2PLATINUMS_PACE_PING_SET_PING= Set pace ping message
+CU2PLATINUMS_PACE_PING_SET_PING_DESC= sets the pace ping message for the current map
+CU2PLATINUMS_PACE_PING_MAP_SETTING= Pace Ping for Map
+CU2PLATINUMS_PACE_PING_MAP_SETTING_DESC= Wether to pace ping for this map on enter, on completion, or not at all
