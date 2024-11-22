@@ -1,5 +1,5 @@
 - Name: CU2Platinums
-  Version: 1.1.1
+  Version: 1.1.2
   DLL: bin/CU2Platinums.dll
   Dependencies:
     - Name: EverestCore

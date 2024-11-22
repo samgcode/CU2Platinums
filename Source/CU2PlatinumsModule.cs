@@ -350,8 +350,12 @@ public class CU2PlatinumsModule : EverestModule
         if (returnToLobby)
         {
             returnToLobby = false;
-            session.Area = lobbyArea;
-            intoLevel = lobbyRoom;
+
+            Session session2 = new Session();
+            session2.Area = lobbyArea;
+            session2.Level = lobbyRoom;
+    
+            return orig(orig_celeste, session2, lobbyRoom);
         }
 
         return orig(orig_celeste, session, intoLevel);
