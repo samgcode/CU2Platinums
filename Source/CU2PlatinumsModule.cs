@@ -211,7 +211,7 @@ public class CU2PlatinumsModule : EverestModule
                 }
                 catch (Exception e)
                 {
-                    Logger.Log(LogLevel.Warn, "CU2PlatinumsModule", $"Failed to reset lobby visit manager: {e}");
+                    Logger.Log(LogLevel.Warn, "CU2Platinums", $"Failed to reset lobby visit manager: {e}");
                 }
             }
         }
@@ -252,7 +252,6 @@ public class CU2PlatinumsModule : EverestModule
             }
         }
 
-
         if (platEntity == null && InLobby(level.Session))
         {
             EntityData data = new EntityData();
@@ -268,7 +267,7 @@ public class CU2PlatinumsModule : EverestModule
             }
             else
             {
-                Logger.Log(LogLevel.Info, "CU2PlatinumsModule", $"No spawn position found for {currentLobby}");
+                Logger.Log(LogLevel.Info, "CU2Platinums", $"No spawn position found for {currentLobby}");
                 data.Position = player.Position - level.LevelOffset;
             }
 
@@ -339,7 +338,6 @@ public class CU2PlatinumsModule : EverestModule
             PacePingManager.OnDeath(currentMapClean);
             returnToLobby = true;
             reset();
-            CollabModule.Instance.Session.LobbySID = null;
         }
 
         return orig(self, direction, ifInvincible, registerStats);
@@ -503,18 +501,6 @@ public class CU2PlatinumsModule : EverestModule
         leader.Entity.SceneAs<Level>().Add(silverBerry);
     }
 
-    public static bool hasPlatinum(Player player)
-    {
-        foreach (Follower follower in player.Leader.Followers)
-        {
-            if (follower.Entity.GetType().ToString() == "Celeste.Mod.PlatinumStrawberry.Entities.PlatinumBerry")
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public static bool lobbyCompleted()
     {
         return (mapsInLobby != 0) && mapsCompleted.Count >= mapsInLobby;
@@ -531,8 +517,6 @@ public class CU2PlatinumsModule : EverestModule
 
     private static bool InLobby(Session session)
     {
-
-
         return LobbyHelper.IsCollabLobby(session.Area.GetSID());
     }
 

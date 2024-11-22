@@ -47,10 +47,10 @@ public class CU2PlatinumsModuleSettings : EverestModuleSettings
 
   public void CreatePacePingEntry(TextMenu menu, bool inGame)
   {
-    TextMenuExt.SubMenu subMenu = new TextMenuExt.SubMenu(Dialog.Clean("CU2PLATINUMS_PACE_PING"), PacePingEnabled);
+    TextMenuExt.SubMenu subMenu = new TextMenuExt.SubMenu(Dialog.Clean("CU2PLATINUMS_PACE_PING"), false);
     TextMenu.Item menuItem;
 
-    subMenu.Add(menuItem = new TextMenu.OnOff(Dialog.Clean("CU2PLATINUMS_PACE_PING_ENABLED"), false).Change(value =>
+    subMenu.Add(menuItem = new TextMenu.OnOff(Dialog.Clean("CU2PLATINUMS_PACE_PING_ENABLED"), PacePingEnabled).Change(value =>
     {
       PacePingEnabled = value;
       CU2PlatinumsModule.Instance.SaveSettings();
