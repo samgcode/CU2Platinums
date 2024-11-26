@@ -70,6 +70,7 @@ public class CU2PlatinumsModule : EverestModule
     public static string lobbyRoom;
 
     public static bool shouldUpdate = false;
+    public static bool inCompleteAnimation = false;
     public static bool returnToLobby = false;
     public static bool paused = false;
 
@@ -129,6 +130,7 @@ public class CU2PlatinumsModule : EverestModule
     public static void OnLoadLevel(On.Celeste.LevelLoader.orig_StartLevel orig, LevelLoader self)
     {
         paused = false;
+        inCompleteAnimation = false;
 
         AreaData area = AreaData.Areas[self.Level.Session.Area.ID];
         currentMap = self.Level.Session.Area.GetSID();
@@ -213,6 +215,22 @@ public class CU2PlatinumsModule : EverestModule
                 {
                     Logger.Log(LogLevel.Warn, "CU2Platinums", $"Failed to reset lobby visit manager: {e}");
                 }
+            }
+        }
+        else
+        {
+            Follower plat = null;
+            foreach (Follower follower in player.Leader.Followers)
+            {
+                if (follower.Entity.GetType().ToString() == "Celeste.Mod.PlatinumStrawberry.Entities.PlatinumBerry")
+                {
+                    plat = follower;
+                }
+            }
+
+            if (plat == null && !inCompleteAnimation)
+            {
+                shouldUpdate = true;
             }
         }
 
@@ -354,7 +372,7 @@ public class CU2PlatinumsModule : EverestModule
             Session session2 = new Session();
             session2.Area = lobbyArea;
             session2.Level = lobbyRoom;
-    
+
             return orig(orig_celeste, session2, lobbyRoom);
         }
 
@@ -365,6 +383,8 @@ public class CU2PlatinumsModule : EverestModule
     {
         if (platEntity != null)
         {
+            inCompleteAnimation = true;
+
             platFollower.Leader.Followers.Remove(platFollower);
 
             string map = level.Session.Area.GetSID();

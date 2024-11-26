@@ -47,65 +47,68 @@ public class CU2PlatinumsModuleSettings : EverestModuleSettings
 
   public void CreatePacePingEntry(TextMenu menu, bool inGame)
   {
-    TextMenuExt.SubMenu subMenu = new TextMenuExt.SubMenu(Dialog.Clean("CU2PLATINUMS_PACE_PING"), false);
-    TextMenu.Item menuItem;
-
-    subMenu.Add(menuItem = new TextMenu.OnOff(Dialog.Clean("CU2PLATINUMS_PACE_PING_ENABLED"), PacePingEnabled).Change(value =>
+    if (CU2PlatinumsModule.currentMap != null)
     {
-      PacePingEnabled = value;
-      CU2PlatinumsModule.Instance.SaveSettings();
-    }));
-    menuItem.AddDescription(subMenu, menu, Dialog.Clean("CU2PLATINUMS_PACE_PING_ENABLED_DESC"));
+      TextMenuExt.SubMenu subMenu = new TextMenuExt.SubMenu(Dialog.Clean("CU2PLATINUMS_PACE_PING"), false);
+      TextMenu.Item menuItem;
 
-    subMenu.Add(menuItem = new TextMenu.Button(Dialog.Clean("CU2PLATINUMS_PACE_PING_IMPORT_WEBHOOK")).Pressed(() =>
-    {
-      string text = TextInput.GetClipboardText();
-      PaceState.WebhookURL = text;
-      CU2PlatinumsModule.Instance.SaveSettings();
-    }));
-    menuItem.AddDescription(subMenu, menu, Dialog.Clean("CU2PLATINUMS_PACE_PING_IMPORT_WEBHOOK_DESC"));
-
-    subMenu.Add(menuItem = new TextMenu.Button(Dialog.Clean("CU2PLATINUMS_PACE_PING_BOT_USERNAME")).Pressed(() =>
-    {
-      string text = TextInput.GetClipboardText();
-      PaceState.Username = text;
-      CU2PlatinumsModule.Instance.SaveSettings();
-    }));
-    menuItem.AddDescription(subMenu, menu, Dialog.Clean("CU2PLATINUMS_PACE_PING_BOT_USERNAME_DESC"));
-
-    subMenu.Add(menuItem = new TextMenu.Button(Dialog.Clean("CU2PLATINUMS_PACE_PING_SET_PING")).Pressed(() =>
-    {
-      string text = TextInput.GetClipboardText();
-      string currentMap = CU2PlatinumsModule.currentMap;
-      if (currentMap != null)
+      subMenu.Add(menuItem = new TextMenu.OnOff(Dialog.Clean("CU2PLATINUMS_PACE_PING_ENABLED"), PacePingEnabled).Change(value =>
       {
-        Messages[currentMap] = text;
+        PacePingEnabled = value;
+        CU2PlatinumsModule.Instance.SaveSettings();
+      }));
+      menuItem.AddDescription(subMenu, menu, Dialog.Clean("CU2PLATINUMS_PACE_PING_ENABLED_DESC"));
+
+      subMenu.Add(menuItem = new TextMenu.Button(Dialog.Clean("CU2PLATINUMS_PACE_PING_IMPORT_WEBHOOK")).Pressed(() =>
+      {
+        string text = TextInput.GetClipboardText();
+        PaceState.WebhookURL = text;
+        CU2PlatinumsModule.Instance.SaveSettings();
+      }));
+      menuItem.AddDescription(subMenu, menu, Dialog.Clean("CU2PLATINUMS_PACE_PING_IMPORT_WEBHOOK_DESC"));
+
+      subMenu.Add(menuItem = new TextMenu.Button(Dialog.Clean("CU2PLATINUMS_PACE_PING_BOT_USERNAME")).Pressed(() =>
+      {
+        string text = TextInput.GetClipboardText();
+        PaceState.Username = text;
+        CU2PlatinumsModule.Instance.SaveSettings();
+      }));
+      menuItem.AddDescription(subMenu, menu, Dialog.Clean("CU2PLATINUMS_PACE_PING_BOT_USERNAME_DESC"));
+
+      subMenu.Add(menuItem = new TextMenu.Button(Dialog.Clean("CU2PLATINUMS_PACE_PING_SET_PING")).Pressed(() =>
+      {
+        string text = TextInput.GetClipboardText();
+        string currentMap = CU2PlatinumsModule.currentMap;
+        if (currentMap != null)
+        {
+          Messages[currentMap] = text;
+        }
+
+        CU2PlatinumsModule.Instance.SaveSettings();
+      }));
+      menuItem.AddDescription(subMenu, menu, Dialog.Clean("CU2PLATINUMS_PACE_PING_SET_PING_DESC"));
+
+      if (!MapPingSettings.ContainsKey(CU2PlatinumsModule.currentMap))
+      {
+        MapPingSettings[CU2PlatinumsModule.currentMap] = MapPingSetting.None;
       }
+      Logger.Log(LogLevel.Info, "CU2Platinums", $"Current Map: {CU2PlatinumsModule.currentMap}");
+      Logger.Log(LogLevel.Info, "CU2Platinums", $"{MapPingSettings[CU2PlatinumsModule.currentMap]}");
+      subMenu.Add(menuItem = new TextMenuExt.EnumSlider<MapPingSetting>(Dialog.Clean("CU2PLATINUMS_PACE_PING_MAP_SETTING"), MapPingSettings[CU2PlatinumsModule.currentMap]).Change((setting) =>
+      {
+        string currentMap = CU2PlatinumsModule.currentMap;
+        if (currentMap != null)
+        {
+          MapPingSettings[currentMap] = setting;
+        }
 
-      CU2PlatinumsModule.Instance.SaveSettings();
-    }));
-    menuItem.AddDescription(subMenu, menu, Dialog.Clean("CU2PLATINUMS_PACE_PING_SET_PING_DESC"));
+        CU2PlatinumsModule.Instance.SaveSettings();
+      }));
 
-    if (!MapPingSettings.ContainsKey(CU2PlatinumsModule.currentMap))
-    {
-      MapPingSettings[CU2PlatinumsModule.currentMap] = MapPingSetting.None;
+      menuItem.AddDescription(subMenu, menu, Dialog.Clean("CU2PLATINUMS_PACE_PING_MAP_SETTING_DESC"));
+
+      menu.Add(subMenu);
     }
-    Logger.Log(LogLevel.Info, "CU2Platinums", $"Current Map: {CU2PlatinumsModule.currentMap}");
-    Logger.Log(LogLevel.Info, "CU2Platinums", $"{MapPingSettings[CU2PlatinumsModule.currentMap]}");
-    subMenu.Add(menuItem = new TextMenuExt.EnumSlider<MapPingSetting>(Dialog.Clean("CU2PLATINUMS_PACE_PING_MAP_SETTING"), MapPingSettings[CU2PlatinumsModule.currentMap]).Change((setting) =>
-    {
-      string currentMap = CU2PlatinumsModule.currentMap;
-      if (currentMap != null)
-      {
-        MapPingSettings[currentMap] = setting;
-      }
-
-      CU2PlatinumsModule.Instance.SaveSettings();
-    }));
-
-    menuItem.AddDescription(subMenu, menu, Dialog.Clean("CU2PLATINUMS_PACE_PING_MAP_SETTING_DESC"));
-
-    menu.Add(subMenu);
   }
 
   public TextMenu.Button CreateMenuButton(TextMenu menu, string dialogLabel, Func<string, string> dialogTransform, Action onPress)
