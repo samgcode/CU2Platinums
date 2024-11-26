@@ -353,9 +353,12 @@ public class CU2PlatinumsModule : EverestModule
     {
         if (platEntity != null)
         {
-            PacePingManager.OnDeath(currentMapClean);
-            returnToLobby = true;
-            reset();
+            if (registerStats && self.StateMachine.State != Player.StReflectionFall)
+            {
+                PacePingManager.OnDeath(currentMapClean);
+                returnToLobby = true;
+                reset();
+            }
         }
 
         return orig(self, direction, ifInvincible, registerStats);
