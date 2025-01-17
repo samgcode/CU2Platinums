@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Reflection;
 using System.Collections.Generic;
-using Microsoft.Xna.Framework;
+using Monocle;
 using MonoMod.RuntimeDetour;
+using Microsoft.Xna.Framework;
 using Celeste.Mod.CollabUtils2;
 using Celeste.Mod.CollabUtils2.UI;
 using Celeste.Mod.CollabUtils2.Entities;
 using Celeste.Mod.CollabUtils2.Triggers;
-using Monocle;
 using Celeste.Mod.CU2Platinums.PacePing;
+using Celeste.Mod.CU2Platinums.Journal;
+using Celeste.Mod.CU2Platinums.ModIntegration;
 
 namespace Celeste.Mod.CU2Platinums;
 
@@ -23,7 +25,7 @@ public class CU2PlatinumsModule : EverestModule
     public static CU2PlatinumsModuleSession Session => (CU2PlatinumsModuleSession)Instance._Session;
 
     public override Type SaveDataType => typeof(CU2PlatinumsModuleSaveData);
-    public static CU2PlatinumsModuleSaveData SaveData => (CU2PlatinumsModuleSaveData)Instance._SaveData;
+    public static CU2PlatinumsModuleSaveData SaveData_ => (CU2PlatinumsModuleSaveData)Instance._SaveData;
 
     public static readonly Random rand = new Random();
 
@@ -75,6 +77,7 @@ public class CU2PlatinumsModule : EverestModule
     public static bool paused = false;
 
     public static string currentLobby = null;
+    public static string currentLevelSet = null;
     public static string currentMap = null;
     public static string currentMapClean = null;
 
@@ -97,6 +100,13 @@ public class CU2PlatinumsModule : EverestModule
         On.Celeste.LevelLoader.StartLevel += OnLoadLevel;
         On.Celeste.Player.OnTransition += OnPlayerTransition;
         On.Celeste.Player.Update += Player_Update;
+
+        On.Celeste.OuiJournal.Update += PlatinumJournal.Update;
+        On.Celeste.OuiJournalProgress.ctor += PlatinumJournal.OuiJournalProgressCtor;
+        On.Celeste.OuiJournalPage.Redraw += PlatinumJournal.OnJournalPageRedraw;
+        On.Celeste.OuiJournal.Close += PlatinumJournal.OnJournalClose;
+        Everest.Events.Journal.OnEnter += PlatinumJournal.OnJournalEnter;
+
         Everest.Events.Level.OnPause += OnPause;
         Everest.Events.Level.OnUnpause += OnUnpause;
         Everest.Events.Level.OnExit += Level_OnExit;
@@ -125,6 +135,13 @@ public class CU2PlatinumsModule : EverestModule
         openChapterPanel = new Hook(
             typeof(InGameOverworldHelper).GetMethod("OpenChapterPanel", BindingFlags.Static | BindingFlags.Public),
             typeof(CU2PlatinumsModule).GetMethod("onOpenChapterPanel"));
+
+        PlatinumJournal.Load();
+    }
+
+    public override void LoadContent(bool firstLoad)
+    {
+        CollabUtils2Integration.Load();
     }
 
     public static void OnLoadLevel(On.Celeste.LevelLoader.orig_StartLevel orig, LevelLoader self)
@@ -135,6 +152,8 @@ public class CU2PlatinumsModule : EverestModule
         AreaData area = AreaData.Areas[self.Level.Session.Area.ID];
         currentMap = self.Level.Session.Area.GetSID();
         currentMapClean = area.Name.DialogCleanOrNull() ?? area.Name.SpacedPascalCase();
+        string lobbyLevelSet = LobbyHelper.GetLobbyLevelSet(self.Level.Session.Area.GetSID());
+
 
         if (InLobby(self.Level.Session))
         {
@@ -144,6 +163,7 @@ public class CU2PlatinumsModule : EverestModule
                 reset();
             }
             currentLobby = newLobby;
+            currentLevelSet = lobbyLevelSet;
             PacePingManager.SetCampaignName(currentMapClean, Dialog.CleanLevelSet(area.LevelSet));
         }
         shouldUpdate = true;
@@ -168,7 +188,7 @@ public class CU2PlatinumsModule : EverestModule
         {
             Vector2 position = level.Tracker.GetEntity<Player>().Center - level.LevelOffset + new Vector2(0, -4);
 
-            SaveData.SpawnPositions[currentLobby] = position;
+            SaveData_.SpawnPositions[currentLobby] = position;
         }
     }
 
@@ -181,7 +201,7 @@ public class CU2PlatinumsModule : EverestModule
         }
         if (InLobby(level.Session))
         {
-            SaveData.SpawnPositions.Remove(currentLobby);
+            SaveData_.SpawnPositions.Remove(currentLobby);
         }
     }
 
@@ -215,6 +235,8 @@ public class CU2PlatinumsModule : EverestModule
                 {
                     Logger.Log(LogLevel.Warn, "CU2Platinums", $"Failed to reset lobby visit manager: {e}");
                 }
+
+                OnPlatinumPickup();
             }
         }
         else
@@ -253,6 +275,12 @@ public class CU2PlatinumsModule : EverestModule
         playerOnFirstUpdate(player);
     }
 
+    private static void OnPlatinumPickup()
+    {
+        PlatinumJournal.OnPlatinumPickup();
+        mapsCompleted = new List<string>();
+    }
+
     private static void playerOnFirstUpdate(Player player)
     {
         Level level = Engine.Scene as Level;
@@ -275,9 +303,9 @@ public class CU2PlatinumsModule : EverestModule
             EntityData data = new EntityData();
             data.Name = "PlatinumStrawberry/PlatinumStrawberry";
 
-            if (SaveData.SpawnPositions.ContainsKey(currentLobby))
+            if (SaveData_.SpawnPositions.ContainsKey(currentLobby))
             {
-                data.Position = SaveData.SpawnPositions[currentLobby];
+                data.Position = SaveData_.SpawnPositions[currentLobby];
             }
             else if (spawnPositions.ContainsKey(currentLobby))
             {
@@ -384,17 +412,18 @@ public class CU2PlatinumsModule : EverestModule
 
     public static System.Collections.IEnumerator MiniHeartSmash(Func<MiniHeart, Player, Level, System.Collections.IEnumerator> orig, MiniHeart self, Player player, Level level)
     {
+        string map = level.Session.Area.GetSID();
+        if (!mapsCompleted.Contains(map))
+        {
+            mapsCompleted.Add(map);
+            Logger.Log(LogLevel.Info, "CU2Platinums", $"Completed {map}");
+        }
+
         if (platEntity != null)
         {
             inCompleteAnimation = true;
 
             platFollower.Leader.Followers.Remove(platFollower);
-
-            string map = level.Session.Area.GetSID();
-            if (!mapsCompleted.Contains(map))
-            {
-                mapsCompleted.Add(map);
-            }
 
             if (Settings.EnableSilverTrain)
             {
@@ -537,8 +566,8 @@ public class CU2PlatinumsModule : EverestModule
     {
         platEntity = null;
         platFollower = null;
-        mapsCompleted = new List<string>();
         currentLobby = null;
+        currentLevelSet = null;
         silverBerries = new List<IStrawberry>();
     }
 
@@ -552,6 +581,11 @@ public class CU2PlatinumsModule : EverestModule
         On.Celeste.LevelLoader.StartLevel -= OnLoadLevel;
         On.Celeste.Player.OnTransition -= OnPlayerTransition;
         On.Celeste.Player.Update -= Player_Update;
+        On.Celeste.OuiJournal.Update -= PlatinumJournal.Update;
+        On.Celeste.OuiJournalProgress.ctor -= PlatinumJournal.OuiJournalProgressCtor;
+        On.Celeste.OuiJournalPage.Redraw -= PlatinumJournal.OnJournalPageRedraw;
+        On.Celeste.OuiJournal.Close -= PlatinumJournal.OnJournalClose;
+        Everest.Events.Journal.OnEnter -= PlatinumJournal.OnJournalEnter;
         Everest.Events.Level.OnPause -= OnPause;
         Everest.Events.Level.OnUnpause -= OnUnpause;
         Everest.Events.Level.OnExit -= Level_OnExit;

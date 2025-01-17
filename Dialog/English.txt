@@ -17,3 +17,5 @@ CU2PLATINUMS_PACE_PING_SET_PING_DESC= sets the pace ping message for the current
 for actual pings use <@user_id> for users and <@&role_id> for roles
 CU2PLATINUMS_PACE_PING_MAP_SETTING= Pace Ping for Map
 CU2PLATINUMS_PACE_PING_MAP_SETTING_DESC= Wether to pace ping for this map on enter, on completion, or not at all
+
+CU2PLATINUMS_JOURNAL_PROGRESS=PLATINUM
