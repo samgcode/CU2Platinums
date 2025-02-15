@@ -67,6 +67,7 @@ public class CU2PlatinumsModule : EverestModule
     public static Entity platEntity = null;
     public static Follower platFollower = null;
     public static List<IStrawberry> silverBerries = new List<IStrawberry>();
+    public static Dictionary<string, List<EntityID>> collectedStrawberries = new Dictionary<string, List<EntityID>>();
 
     public static AreaKey lobbyArea;
     public static string lobbyRoom;
@@ -106,6 +107,8 @@ public class CU2PlatinumsModule : EverestModule
         On.Celeste.OuiJournalPage.Redraw += PlatinumJournal.OnJournalPageRedraw;
         On.Celeste.OuiJournal.Close += PlatinumJournal.OnJournalClose;
         Everest.Events.Journal.OnEnter += PlatinumJournal.OnJournalEnter;
+
+        On.Celeste.Strawberry.OnCollect += onStrawberryCollected;
 
         Everest.Events.Level.OnPause += OnPause;
         Everest.Events.Level.OnUnpause += OnUnpause;
@@ -153,7 +156,6 @@ public class CU2PlatinumsModule : EverestModule
         currentMap = self.Level.Session.Area.GetSID();
         currentMapClean = area.Name.DialogCleanOrNull() ?? area.Name.SpacedPascalCase();
         string lobbyLevelSet = LobbyHelper.GetLobbyLevelSet(self.Level.Session.Area.GetSID());
-
 
         if (InLobby(self.Level.Session))
         {
@@ -209,6 +211,7 @@ public class CU2PlatinumsModule : EverestModule
     {
         if (platEntity != null)
         {
+            // delete all silver collect triggers
             self.level.Tracker.GetEntities<GoldBerryCollectTrigger>().ForEach(trigger => trigger.RemoveSelf());
         }
 
@@ -273,6 +276,26 @@ public class CU2PlatinumsModule : EverestModule
         }
         shouldUpdate = false;
         playerOnFirstUpdate(player);
+    }
+
+    private static void onStrawberryCollected(On.Celeste.Strawberry.orig_OnCollect orig, Strawberry self)
+    {
+        Session session = (Engine.Scene as Level).Session;
+        string map = session.Area.GetSID();
+
+        AreaKey area = SaveData.Instance.CurrentSession_Safe.Area;
+        AreaModeStats areaModeStats = SaveData.Instance.Areas_Safe[area.ID].Modes[(int)area.Mode];
+
+        if (!collectedStrawberries.ContainsKey(map))
+        {
+            collectedStrawberries[map] = new List<EntityID>();
+        }
+        if (!collectedStrawberries[map].Contains(self.ID))
+        {
+            collectedStrawberries[map].Add(self.ID);
+        }
+
+        orig(self);
     }
 
     private static void OnPlatinumPickup()
@@ -569,6 +592,7 @@ public class CU2PlatinumsModule : EverestModule
         currentLobby = null;
         currentLevelSet = null;
         silverBerries = new List<IStrawberry>();
+        collectedStrawberries = new Dictionary<string, List<EntityID>>();
     }
 
     private static bool InLobby(Session session)
@@ -581,11 +605,15 @@ public class CU2PlatinumsModule : EverestModule
         On.Celeste.LevelLoader.StartLevel -= OnLoadLevel;
         On.Celeste.Player.OnTransition -= OnPlayerTransition;
         On.Celeste.Player.Update -= Player_Update;
+
         On.Celeste.OuiJournal.Update -= PlatinumJournal.Update;
         On.Celeste.OuiJournalProgress.ctor -= PlatinumJournal.OuiJournalProgressCtor;
         On.Celeste.OuiJournalPage.Redraw -= PlatinumJournal.OnJournalPageRedraw;
         On.Celeste.OuiJournal.Close -= PlatinumJournal.OnJournalClose;
         Everest.Events.Journal.OnEnter -= PlatinumJournal.OnJournalEnter;
+
+        On.Celeste.Strawberry.OnCollect -= onStrawberryCollected;
+
         Everest.Events.Level.OnPause -= OnPause;
         Everest.Events.Level.OnUnpause -= OnUnpause;
         Everest.Events.Level.OnExit -= Level_OnExit;

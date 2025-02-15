@@ -164,6 +164,7 @@ namespace Celeste.Mod.CU2Platinums.Journal
 
       areas = CollabUtils2Integration.GetSortedCollabAreaStats(instance, levelSet);
       area = areas[index];
+
       return 0;
     }
 
@@ -216,6 +217,44 @@ namespace Celeste.Mod.CU2Platinums.Journal
       {
         return newDeaths;
       }
+    }
+
+    private static (int, int) GetBerriesAtIndex(
+      int index, OuiJournal journal, SaveData instance,
+      List<CustomAreaStats> customAreaStats
+    )
+    {
+      GetInterludeOffset(index, instance, journal, out AreaStats area);
+
+      AreaData areaData = AreaData.Get(area);
+      int areaStrawberries = areaData.Mode[0].StartStrawberries;
+
+      AreaKey areaKey = areaData.ToKey();
+      AreaModeStats areaModeStats = SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode];
+
+      int totalStrawberries = areaModeStats.TotalStrawberries;
+
+      if (displayDiff)
+      {
+        if (CU2PlatinumsModule.mapsCompleted.Contains(areaData.Name))
+        {
+          totalStrawberries = CU2PlatinumsModule.collectedStrawberries[areaData.Name].Count;
+        }
+        else
+        {
+          totalStrawberries = 0;
+        }
+      }
+
+      if (areaStrawberries == 0)
+      {
+        if (totalStrawberries == 0)
+        {
+          return (-1, -1);
+        }
+      }
+
+      return (totalStrawberries, areaStrawberries);
     }
 
     public static void OnJournalEnter(OuiJournal journal, Oui from)
@@ -308,39 +347,65 @@ namespace Celeste.Mod.CU2Platinums.Journal
           OuiJournalPage.Row
             row = rows[i + heartSideOffset]; // go up an additional row if were on the heart side to skip the ui line between regular levels and the heart side
           List<OuiJournalPage.Cell> entries = row.Entries;
+
           try
           {
-            ReplaceTime(0);
+            OuiJournalPage.Cell cell = new OuiJournalPage.EmptyCell(100f);
 
-            void ReplaceTime(int mode)
+            int entriesIndex = entries.Count + instance.UnlockedModes - 9;
+            if (entriesIndex > entries.Count - 1 || entriesIndex < 0)
             {
-              OuiJournalPage.Cell cell = new OuiJournalPage.EmptyCell(100f);
+              return;
+            }
 
-              int entriesIndex = entries.Count + instance.UnlockedModes - 6;
-              if (entriesIndex > entries.Count - 1 || entriesIndex < 0)
-              {
-                return;
-              }
+            var (berries, total) = GetBerriesAtIndex(firstIndexOnPage + i - 1, journal, instance, JournalSnapshot);
+            Logger.Log(LogLevel.Info, "CU2Platinums", $"Berries: {berries}");
 
-              long time = GetTimeAtIndexFromDataType(firstIndexOnPage + i - 1, journal, instance, JournalSnapshot);
-
-              if (time == 0)
-              {
-                cell = new OuiJournalPage.IconCell("dot");
-              }
-              else
-              {
-                string timeDialog = time > 0 ? Dialog.Time(time) : "-";
-
-                cell = new OuiJournalPage.TextCell(timeDialog, JournalProgressPage?.TextJustify ?? Vector2.Zero, 0.5f,
-                  JournalProgressPage.TextColor);
-              }
-
+            if (berries != -1)
+            {
+              cell = new OuiJournalPage.TextCell($"{berries}/{total}", JournalProgressPage?.TextJustify ?? Vector2.Zero, 0.5f, JournalProgressPage.TextColor);
 
               cell.SpreadOverColumns = 1;
 
               entries[entriesIndex] = cell;
             }
+
+            Logger.Log(LogLevel.Info, "CU2Platinums", $"Entries: {((OuiJournalPage.TextCell)entries[entriesIndex]).text}");
+          }
+          catch (Exception ex)
+          {
+            Logger.Error("CU2Platinums", ex.Message);
+            Console.WriteLine(ex.StackTrace);
+          }
+
+          try
+          {
+            OuiJournalPage.Cell cell = new OuiJournalPage.EmptyCell(100f);
+
+            int entriesIndex = entries.Count + instance.UnlockedModes - 6;
+            if (entriesIndex > entries.Count - 1 || entriesIndex < 0)
+            {
+              return;
+            }
+
+            long time = GetTimeAtIndexFromDataType(firstIndexOnPage + i - 1, journal, instance, JournalSnapshot);
+
+            if (time == 0)
+            {
+              cell = new OuiJournalPage.IconCell("dot");
+            }
+            else
+            {
+              string timeDialog = time > 0 ? Dialog.Time(time) : "-";
+
+              cell = new OuiJournalPage.TextCell(timeDialog, JournalProgressPage?.TextJustify ?? Vector2.Zero, 0.5f,
+                JournalProgressPage.TextColor);
+            }
+
+
+            cell.SpreadOverColumns = 1;
+
+            entries[entriesIndex] = cell;
           }
           catch (Exception ex)
           {
