@@ -462,6 +462,15 @@ namespace Celeste.Mod.CU2Platinums.Journal
         {
           Logger.Warn("CU2Platinums", "Could not find render target for journal progress page");
         }
+
+        // int totalTimeRowIndex = mapsOnThisCollabUtils2Page;
+        // if (totalTimeRowIndex < rows.Count - 1 && totalTimeRowIndex >= 0)
+        // {
+        //   OuiJournalPage.Row defaultTotalTimeRow = rows[totalTimeRowIndex];
+        //   OuiJournalPage.Cell totalTimeCell = defaultTotalTimeRow.Entries[^1];
+        //   totalTimeCell.SpreadOverColumns = 1;
+        //   DynamicData.For(totalTimeCell).Set("forceWidth", displayDiff);
+        // }
       }
       catch (Exception ex)
       {
