@@ -174,22 +174,18 @@ namespace Celeste.Mod.CU2Platinums.Journal
       return 0;
     }
 
-    private static List<OuiJournalPage.Cell> UpdateEntry(List<OuiJournalPage.Cell> entries, AreaStats area, int offset, List<CustomAreaStats> customAreaStats, int index)
+    private static List<OuiJournalPage.Cell> UpdateEntry(
+      List<OuiJournalPage.Cell> entries, AreaStats area, int offset, List<CustomAreaStats> customAreaStats,
+      int index, bool isHeartside)
     {
-      OuiJournalPage.Cell berriesCell;
-      OuiJournalPage.Cell deathsCell;
-      OuiJournalPage.Cell timeCell;
-
       AreaData areaData = AreaData.Get(area);
       AreaKey areaKey = areaData.ToKey();
       AreaModeStats areaModeStats = SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode];
       CustomAreaStats areaStats = customAreaStats[index + offset];
-      ModeProperties modeProperties = AreaData.Get(area).Mode[(int)areaKey.Mode];
 
-
+      bool mapCompleted = CU2PlatinumsModule.mapsCompleted.Contains(areaData.Name);
 
       int collectedBerries = areaModeStats.TotalStrawberries;
-
       int areaBerries = areaData.Mode[0].StartStrawberries;
 
       int newDeaths = area.Modes[0].Deaths;
@@ -200,9 +196,14 @@ namespace Celeste.Mod.CU2Platinums.Journal
 
       if (displayDiff)
       {
-        if (CU2PlatinumsModule.mapsCompleted.Contains(areaData.Name))
+        if (mapCompleted)
         {
           collectedBerries = CU2PlatinumsModule.collectedStrawberries[areaData.Name].Count;
+          if (areaModeStats.BestDeaths == 0)
+          {
+            collectedBerries -= 1;
+          }
+
         }
         else
         {
@@ -213,7 +214,7 @@ namespace Celeste.Mod.CU2Platinums.Journal
 
         int diff = newDeaths - oldDeaths;
 
-        if (diff > 0 || CU2PlatinumsModule.mapsCompleted.Contains(AreaData.Get(area).Name))
+        if (diff > 0 || mapCompleted)
         {
           deaths = diff;
         }
@@ -227,6 +228,12 @@ namespace Celeste.Mod.CU2Platinums.Journal
 
         time = newTimePlayed - oldTimePlayed;
       }
+
+      OuiJournalPage.Cell berriesCell;
+      OuiJournalPage.Cell deathsCell;
+      OuiJournalPage.Cell timeCell;
+      OuiJournalPage.Cell deathlessCell;
+      OuiJournalPage.Cell completedCell;
 
       if (areaBerries == 0 && (displayDiff || collectedBerries == 0))
       {
@@ -252,7 +259,6 @@ namespace Celeste.Mod.CU2Platinums.Journal
         deathsCell = new OuiJournalPage.TextCell(deathDialog, JournalProgressPage?.TextJustify ?? Vector2.Zero, 0.5f, color);
       }
 
-
       if (time == 0)
       {
         timeCell = new OuiJournalPage.IconCell("dot");
@@ -263,13 +269,42 @@ namespace Celeste.Mod.CU2Platinums.Journal
         timeCell = new OuiJournalPage.TextCell(timeDialog, JournalProgressPage?.TextJustify ?? Vector2.Zero, 0.5f, JournalProgressPage.TextColor);
       }
 
+      deathlessCell = new OuiJournalPage.IconCell("dot");
+      completedCell = new OuiJournalPage.IconCell("dot");
+
+      if (displayDiff)
+      {
+        if (mapCompleted)
+        {
+          completedCell = new OuiJournalPage.IconCell("heartgem0");
+        }
+      }
+      else
+      {
+        if (areaModeStats.Completed)
+        {
+          completedCell = new OuiJournalPage.IconCell(isHeartside ? "heartgem1" : "heartgem0");
+
+          if (areaModeStats.BestDeaths == 0)
+          {
+            deathlessCell = new OuiJournalPage.IconCell(isHeartside ? "CollabUtils2/golden_strawberry" : "CollabUtils2/silver_strawberry");
+          }
+          else
+          {
+            deathlessCell = new OuiJournalPage.TextCell($"{areaModeStats.BestDeaths}", JournalProgressPage?.TextJustify ?? Vector2.Zero, 0.5f, JournalProgressPage.TextColor);
+          }
+        }
+      }
+
+      entries[4] = completedCell;
       entries[5] = berriesCell;
       entries[6] = deathsCell;
-      // entries[7] = displayDiff ? new OuiJournalPage.IconCell("dot") : entries[7];
+      entries[7] = deathlessCell;
       entries[8] = timeCell;
 
       return entries;
     }
+
 
     public static void OnJournalEnter(OuiJournal journal, Oui from)
     {
@@ -361,14 +396,16 @@ namespace Celeste.Mod.CU2Platinums.Journal
           {
             return;
           }
-          int heartSideOffset = CollabUtils2Integration.IsHeartSide(AreaData.Get(area).SID) ? 1 : 0;
+          bool isHeartside = CollabUtils2Integration.IsHeartSide(AreaData.Get(area).SID);
 
-          OuiJournalPage.Row row = rows[i + heartSideOffset];
+          OuiJournalPage.Row row = rows[isHeartside ? i + 1 : i];
           List<OuiJournalPage.Cell> entries = row.Entries;
 
           try
           {
-            row.Entries = UpdateEntry(row.Entries, area, offset, JournalSnapshot, firstIndexOnPage + i - 1);
+            row.Entries = UpdateEntry(
+              row.Entries, area, offset, JournalSnapshot,
+              firstIndexOnPage + i - 1, isHeartside);
           }
           catch (Exception ex)
           {
