@@ -302,6 +302,7 @@ public class CU2PlatinumsModule : EverestModule
     {
         PlatinumJournal.OnPlatinumPickup();
         mapsCompleted = new List<string>();
+        collectedStrawberries = new Dictionary<string, List<EntityID>>();
     }
 
     private static void playerOnFirstUpdate(Player player)
@@ -592,7 +593,6 @@ public class CU2PlatinumsModule : EverestModule
         currentLobby = null;
         currentLevelSet = null;
         silverBerries = new List<IStrawberry>();
-        collectedStrawberries = new Dictionary<string, List<EntityID>>();
     }
 
     private static bool InLobby(Session session)
