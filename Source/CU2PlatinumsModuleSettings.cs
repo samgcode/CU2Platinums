@@ -91,8 +91,7 @@ public class CU2PlatinumsModuleSettings : EverestModuleSettings
       {
         MapPingSettings[CU2PlatinumsModule.currentMap] = MapPingSetting.None;
       }
-      Logger.Log(LogLevel.Info, "CU2Platinums", $"Current Map: {CU2PlatinumsModule.currentMap}");
-      Logger.Log(LogLevel.Info, "CU2Platinums", $"{MapPingSettings[CU2PlatinumsModule.currentMap]}");
+
       subMenu.Add(menuItem = new TextMenuExt.EnumSlider<MapPingSetting>(Dialog.Clean("CU2PLATINUMS_PACE_PING_MAP_SETTING"), MapPingSettings[CU2PlatinumsModule.currentMap]).Change((setting) =>
       {
         string currentMap = CU2PlatinumsModule.currentMap;

@@ -440,7 +440,6 @@ public class CU2PlatinumsModule : EverestModule
         if (!mapsCompleted.Contains(map))
         {
             mapsCompleted.Add(map);
-            Logger.Log(LogLevel.Info, "CU2Platinums", $"Completed {map}");
         }
 
         if (platEntity != null)

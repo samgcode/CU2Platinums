@@ -485,7 +485,7 @@ namespace Celeste.Mod.CU2Platinums.Journal
           catch (Exception ex)
           {
             Logger.Error("CU2Platinums", ex.Message);
-            Console.WriteLine(ex.StackTrace);
+            Logger.Log(LogLevel.Error, "CU2Platinums", ex.StackTrace);
           }
         }
 
@@ -504,7 +504,7 @@ namespace Celeste.Mod.CU2Platinums.Journal
           catch (Exception ex)
           {
             Logger.Error("CU2Platinums", ex.Message);
-            Console.WriteLine(ex.StackTrace);
+            Logger.Log(LogLevel.Error, "CU2Platinums", ex.StackTrace);
           }
         }
 
@@ -520,7 +520,7 @@ namespace Celeste.Mod.CU2Platinums.Journal
       catch (Exception ex)
       {
         Logger.Error("CU2Platinums", ex.Message);
-        Console.WriteLine(ex.StackTrace);
+        Logger.Log(LogLevel.Error, "CU2Platinums", ex.StackTrace);
       }
     }
 
