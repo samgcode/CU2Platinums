@@ -213,6 +213,18 @@ public class CU2PlatinumsModule : EverestModule
         {
             // delete all silver collect triggers
             self.level.Tracker.GetEntities<GoldBerryCollectTrigger>().ForEach(trigger => trigger.RemoveSelf());
+
+            if (Settings.EnableSilverTrain)
+            {
+                Type silverBerryCollectTrigger = typeof(SilverBerry).Assembly.GetType("Celeste.Mod.CollabUtils2.Triggers.SilverBerryCollectTrigger");
+                self.level.Tracker.GetEntities<Trigger>().ForEach(trigger =>
+                {
+                    if (trigger.GetType() == silverBerryCollectTrigger)
+                    {
+                        trigger.RemoveSelf();
+                    }
+                });
+            }
         }
 
         orig(self);
@@ -326,6 +338,7 @@ public class CU2PlatinumsModule : EverestModule
         {
             EntityData data = new EntityData();
             data.Name = "PlatinumStrawberry/PlatinumStrawberry";
+            data.ID = Calc.Random.Next();
 
             if (SaveData_.SpawnPositions.ContainsKey(currentLobby))
             {
@@ -338,10 +351,19 @@ public class CU2PlatinumsModule : EverestModule
             else
             {
                 Logger.Log(LogLevel.Info, "CU2Platinums", $"No spawn position found for {currentLobby}");
-                data.Position = player.Position - level.LevelOffset;
+                data.Position = player.Position + new Vector2(0, -4);
             }
 
-            Level.LoadCustomEntity(data, level);
+            Type PlatBerry = typeof(PlatinumStrawberry.ModExports)
+                .Assembly
+                .GetType("Celeste.Mod.PlatinumStrawberry.Entities.PlatinumBerry");
+
+            object platinumBerry = PlatBerry.GetConstructor(new Type[] { typeof(EntityData), typeof(Vector2), typeof(EntityID) })
+                .Invoke(new object[] { data, level.LevelOffset, new EntityID(level.Session.Level, data.ID) });
+
+            PlatBerry.GetField("CommandSpawned", BindingFlags.Public | BindingFlags.Instance).SetValue(platinumBerry, Settings.EnableCountCollect);
+
+            level.Add((Entity)Convert.ChangeType(platinumBerry, PlatBerry));
         }
     }
 
@@ -440,21 +462,22 @@ public class CU2PlatinumsModule : EverestModule
         if (!mapsCompleted.Contains(map))
         {
             mapsCompleted.Add(map);
-        }
 
-        if (platEntity != null)
-        {
-            inCompleteAnimation = true;
-
-            platFollower.Leader.Followers.Remove(platFollower);
-
-            if (Settings.EnableSilverTrain)
+            if (platEntity != null)
             {
-                saveSilvers(player);
-            }
+                inCompleteAnimation = true;
 
-            PacePingManager.OnComplete(currentMap, currentMapClean);
+                platFollower.Leader.Followers.Remove(platFollower);
+
+                if (Settings.EnableSilverTrain)
+                {
+                    saveSilvers(player);
+                }
+
+                PacePingManager.OnComplete(currentMap, currentMapClean);
+            }
         }
+
 
         return orig(self, player, level);
     }
@@ -575,6 +598,7 @@ public class CU2PlatinumsModule : EverestModule
         entityData.ID = Calc.Random.Next();
         entityData.Name = "CollabUtils2/SilverBerry";
         SilverBerry silverBerry = new SilverBerry(entityData, Vector2.Zero, (silverBerries[silversSpawned] as Strawberry).ID);
+        typeof(SilverBerry).GetField("spawnedThroughGiveSilver", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(silverBerry, true);
 
         leader.GainFollower(silverBerry.Follower);
         leader.Entity.SceneAs<Level>().Add(silverBerry);

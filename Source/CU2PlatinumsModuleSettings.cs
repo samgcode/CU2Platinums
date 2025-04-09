@@ -10,6 +10,10 @@ public class CU2PlatinumsModuleSettings : EverestModuleSettings
   [SettingName("CU2PLATINUMS_ENABLE_SILVER_TRAIN")]
   public bool EnableSilverTrain { get; set; } = true;
 
+  [SettingName("CU2PLATINUMS_ENABLE_COUNT_COLLECT")]
+  [SettingSubText("CU2PLATINUMS_ENABLE_COUNT_COLLECT_DESC")]
+  public bool EnableCountCollect { get; set; } = false;
+
   public TextMenu.Button SetPosition { get; set; } = null;
   public TextMenu.Button ResetPosition { get; set; } = null;
 
