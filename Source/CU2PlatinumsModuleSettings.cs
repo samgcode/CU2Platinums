@@ -14,6 +14,10 @@ public class CU2PlatinumsModuleSettings : EverestModuleSettings
   [SettingSubText("CU2PLATINUMS_ENABLE_COUNT_COLLECT_DESC")]
   public bool EnableCountCollect { get; set; } = false;
 
+  [SettingName("CU2PLATINUMS_CARRY_PLATINUM")]
+  [SettingSubText("CU2PLATINUMS_CARRY_PLATINUM_DESC")]
+  public bool CarryPlatinum { get; set; } = true;
+
   public TextMenu.Button SetPosition { get; set; } = null;
   public TextMenu.Button ResetPosition { get; set; } = null;
 

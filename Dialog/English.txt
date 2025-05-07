@@ -3,6 +3,10 @@ CU2PLATINUMS_ENABLE_COUNT_COLLECT= Count Platinum Collect
 CU2PLATINUMS_ENABLE_COUNT_COLLECT_DESC= Whether or not to count the platinum in the berry total after 
 collecting it (will only take effect after next picking up the plat)
 
+CU2PLATINUMS_CARRY_PLATINUM= Carry Platinum
+CU2PLATINUMS_CARRY_PLATINUM_DESC= If disabled the platinum will be removed upon picking it up but the 
+QOL stuff will still work, pace pings will also work and stop after death
+
 CU2PLATINUMS_SETPOSITION= Set platinum position
 CU2PLATINUMS_RESETPOSITION= Reset position to default
 

@@ -76,6 +76,8 @@ public class CU2PlatinumsModule : EverestModule
     public static bool inCompleteAnimation = false;
     public static bool returnToLobby = false;
     public static bool paused = false;
+    public static bool inRun = false;
+    public static bool hasPlatinum = false;
 
     public static string currentLobby = null;
     public static string currentLevelSet = null;
@@ -115,8 +117,8 @@ public class CU2PlatinumsModule : EverestModule
         Everest.Events.Level.OnExit += Level_OnExit;
 
         hook_Player_orig_Die = new Hook(
-                typeof(Player).GetMethod("orig_Die", BindingFlags.Public | BindingFlags.Instance),
-                typeof(CU2PlatinumsModule).GetMethod("OnPlayerDie"));
+            typeof(Player).GetMethod("orig_Die", BindingFlags.Public | BindingFlags.Instance),
+            typeof(CU2PlatinumsModule).GetMethod("OnPlayerDie"));
         heartCollect = new Hook(
             typeof(HeartGem).GetMethod("CollectRoutine", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic),
             typeof(CU2PlatinumsModule).GetMethod("HeartSmash"));
@@ -163,6 +165,7 @@ public class CU2PlatinumsModule : EverestModule
             if (currentLobby != null && newLobby != currentLobby)
             {
                 reset();
+                inRun = false;
             }
             currentLobby = newLobby;
             currentLevelSet = lobbyLevelSet;
@@ -170,7 +173,7 @@ public class CU2PlatinumsModule : EverestModule
         }
         shouldUpdate = true;
 
-        if (platEntity != null)
+        if (inRun)
         {
             PacePingManager.OnEnter(currentMap, currentMapClean);
         }
@@ -209,7 +212,7 @@ public class CU2PlatinumsModule : EverestModule
 
     public static void OnPlayerTransition(On.Celeste.Player.orig_OnTransition orig, Player self)
     {
-        if (platEntity != null)
+        if (inRun)
         {
             // delete all silver collect triggers
             self.level.Tracker.GetEntities<GoldBerryCollectTrigger>().ForEach(trigger => trigger.RemoveSelf());
@@ -315,6 +318,16 @@ public class CU2PlatinumsModule : EverestModule
         PlatinumJournal.OnPlatinumPickup();
         mapsCompleted = new List<string>();
         collectedStrawberries = new Dictionary<string, List<EntityID>>();
+        inRun = true;
+        hasPlatinum = true;
+
+        if (!Settings.CarryPlatinum)
+        {
+            platFollower.Leader.Followers.Remove(platFollower);
+            platEntity.RemoveSelf();
+            platFollower = null;
+            platEntity = null;
+        }
     }
 
     private static void playerOnFirstUpdate(Player player)
@@ -325,7 +338,10 @@ public class CU2PlatinumsModule : EverestModule
         {
             Leader leader = player.Leader;
             restorePlatinum(leader);
+        }
 
+        if (inRun)
+        {
             silversSpawned = 0;
 
             if (InLobby(level.Session))
@@ -334,7 +350,7 @@ public class CU2PlatinumsModule : EverestModule
             }
         }
 
-        if (platEntity == null && InLobby(level.Session))
+        if (!hasPlatinum && InLobby(level.Session))
         {
             EntityData data = new EntityData();
             data.Name = "PlatinumStrawberry/PlatinumStrawberry";
@@ -402,7 +418,7 @@ public class CU2PlatinumsModule : EverestModule
 
     public static int onGetHeartCount(Func<Delegate, HeartGemDoor, int> orig, Delegate orig_orig, HeartGemDoor door)
     {
-        if (platEntity != null)
+        if (inRun)
         {
             return mapsCompleted.Count;
         }
@@ -411,7 +427,7 @@ public class CU2PlatinumsModule : EverestModule
 
     public static void onOpenChapterPanel(Action<Player, string, ChapterPanelTrigger.ReturnToLobbyMode, bool, bool> orig, Player player, string sid, ChapterPanelTrigger.ReturnToLobbyMode returnToLobbyMode, bool savingAllowed, bool exitFromGym)
     {
-        if (platEntity != null)
+        if (inRun)
         {
             AreaData areaData = AreaData.Get(sid);
             ModeProperties mode = areaData.Mode[(int)areaData.ToKey().Mode];
@@ -425,7 +441,7 @@ public class CU2PlatinumsModule : EverestModule
 
     public static PlayerDeadBody OnPlayerDie(Func<Player, Vector2, bool, bool, PlayerDeadBody> orig, Player self, Vector2 direction, bool ifInvincible, bool registerStats)
     {
-        if (platEntity != null)
+        if (hasPlatinum)
         {
             if (registerStats && self.StateMachine.State != Player.StReflectionFall)
             {
@@ -434,7 +450,6 @@ public class CU2PlatinumsModule : EverestModule
                 reset();
             }
         }
-
         return orig(self, direction, ifInvincible, registerStats);
     }
 
@@ -462,20 +477,23 @@ public class CU2PlatinumsModule : EverestModule
         if (!mapsCompleted.Contains(map))
         {
             mapsCompleted.Add(map);
+        }
 
-            if (platEntity != null)
+        if (platEntity != null)
+        {
+            inCompleteAnimation = true;
+
+            platFollower.Leader.Followers.Remove(platFollower);
+        }
+
+        if (inRun)
+        {
+            if (Settings.EnableSilverTrain)
             {
-                inCompleteAnimation = true;
-
-                platFollower.Leader.Followers.Remove(platFollower);
-
-                if (Settings.EnableSilverTrain)
-                {
-                    saveSilvers(player);
-                }
-
-                PacePingManager.OnComplete(currentMap, currentMapClean);
+                saveSilvers(player);
             }
+
+            PacePingManager.OnComplete(currentMap, currentMapClean);
         }
 
 
@@ -484,15 +502,23 @@ public class CU2PlatinumsModule : EverestModule
 
     public static System.Collections.IEnumerator HeartSmash(Func<HeartGem, Player, System.Collections.IEnumerator> orig, HeartGem self, Player player)
     {
+        if (inRun && !mapsCompleted.Contains(currentMap))
+        {
+            mapsCompleted.Add(currentMap);
+        }
+
+        if (hasPlatinum)
+        {
+            PacePingManager.OnComplete(currentMap, currentMapClean);
+            inRun = false;
+        }
+
         if (platEntity != null)
         {
             if (!lobbyCompleted())
             {
                 platFollower.Leader.Followers.Remove(platFollower);
             }
-
-            mapsCompleted.Add(currentMap);
-            PacePingManager.OnComplete(currentMap, currentMapClean);
 
             reset();
         }
@@ -522,8 +548,12 @@ public class CU2PlatinumsModule : EverestModule
             case LevelExit.Mode.GiveUp:
                 if (paused)
                 {
-                    reset();
-                    return;
+                    if (level.Session.Area.GetSID() == currentLobby)
+                    {
+                        reset();
+                        inRun = false;
+                        return;
+                    }
                 }
                 break;
         }
@@ -611,6 +641,7 @@ public class CU2PlatinumsModule : EverestModule
 
     public static void reset()
     {
+        hasPlatinum = false;
         platEntity = null;
         platFollower = null;
         currentLobby = null;
