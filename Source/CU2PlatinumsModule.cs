@@ -541,6 +541,9 @@ public class CU2PlatinumsModule : EverestModule
         switch (mode)
         {
             case LevelExit.Mode.SaveAndQuit:
+                reset();
+                inRun = false;
+                return;
             case LevelExit.Mode.Restart:
             case LevelExit.Mode.GoldenBerryRestart:
                 reset();
