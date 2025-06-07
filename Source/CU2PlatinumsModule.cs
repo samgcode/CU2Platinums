@@ -173,7 +173,7 @@ public class CU2PlatinumsModule : EverestModule
         }
         shouldUpdate = true;
 
-        if (inRun)
+        if (hasPlatinum)
         {
             PacePingManager.OnEnter(currentMap, currentMapClean);
         }
@@ -486,16 +486,15 @@ public class CU2PlatinumsModule : EverestModule
             platFollower.Leader.Followers.Remove(platFollower);
         }
 
-        if (inRun)
+        if (inRun && Settings.EnableSilverTrain)
         {
-            if (Settings.EnableSilverTrain)
-            {
-                saveSilvers(player);
-            }
-
-            PacePingManager.OnComplete(currentMap, currentMapClean);
+            saveSilvers(player);
         }
 
+        if (hasPlatinum)
+        {
+            PacePingManager.OnComplete(currentMap, currentMapClean);
+        }
 
         return orig(self, player, level);
     }
