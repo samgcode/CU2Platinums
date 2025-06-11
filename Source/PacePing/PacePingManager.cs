@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -190,45 +189,48 @@ namespace Celeste.Mod.CU2Platinums.PacePing
 
     public static void SendDiscordWebhookMessage(DiscordWebhookRequest request, string url, DiscordWebhookAction action)
     {
-      DiscordWebhookResponse localMessage = EmbedMessage;
-
-      HttpClient client = new HttpClient();
-      client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-      string payload = JsonConvert.SerializeObject(request);
-
-      string response;
-      if (localMessage == null || action == DiscordWebhookAction.Separate)
+      Task.Run(() =>
       {
-        HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, url + "?wait=true");
-        req.Content = new StringContent(payload, Encoding.UTF8, "application/json");
-        response = client.Send(req).Content.ReadAsStringAsync().Result;
-      }
-      else
-      {
-        if (request.Embeds == null)
+        DiscordWebhookResponse localMessage = EmbedMessage;
+
+        HttpClient client = new HttpClient();
+        client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+        string payload = JsonConvert.SerializeObject(request);
+
+        string response;
+        if (localMessage == null || action == DiscordWebhookAction.Separate)
         {
-          request.Embeds = localMessage.Embeds;
+          HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, url + "?wait=true");
+          req.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+          response = client.Send(req).Content.ReadAsStringAsync().Result;
         }
-        HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Patch, url + "/messages/" + localMessage.Id + "?wait=true");
-        req.Content = new StringContent(payload, Encoding.UTF8, "application/json");
-        response = client.Send(req).Content.ReadAsStringAsync().Result;
-      }
+        else
+        {
+          if (request.Embeds == null)
+          {
+            request.Embeds = localMessage.Embeds;
+          }
+          HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Patch, url + "/messages/" + localMessage.Id + "?wait=true");
+          req.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+          response = client.Send(req).Content.ReadAsStringAsync().Result;
+        }
 
-      DiscordWebhookResponse webhookResponse = JsonConvert.DeserializeObject<DiscordWebhookResponse>(response);
-      if (webhookResponse == null)
-      {
-        Logger.Log(LogLevel.Info, "CU2Platinums", $"Couldn't parse discord webhook response to DiscordWebhookResponse");
-        return;
-      }
+        DiscordWebhookResponse webhookResponse = JsonConvert.DeserializeObject<DiscordWebhookResponse>(response);
+        if (webhookResponse == null)
+        {
+          Logger.Log(LogLevel.Info, "CU2Platinums", $"Couldn't parse discord webhook response to DiscordWebhookResponse");
+          return;
+        }
 
-      if (action == DiscordWebhookAction.Update)
-      {
-        EmbedMessage = webhookResponse;
-      }
-      else if (action == DiscordWebhookAction.Death)
-      {
-        EmbedMessage = null;
-      }
+        if (action == DiscordWebhookAction.Update)
+        {
+          EmbedMessage = webhookResponse;
+        }
+        else if (action == DiscordWebhookAction.Death)
+        {
+          EmbedMessage = null;
+        }
+      });
     }
   }
 }
