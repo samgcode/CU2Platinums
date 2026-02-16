@@ -27,7 +27,6 @@ public class CU2PlatinumsModule : EverestModule
     public override Type SaveDataType => typeof(CU2PlatinumsModuleSaveData);
     public static CU2PlatinumsModuleSaveData SaveData_ => (CU2PlatinumsModuleSaveData)Instance._SaveData;
 
-    public static readonly Random rand = new Random();
 
     private static Hook hook_Player_orig_Die;
     private static Hook miniHeartCollect;
@@ -80,7 +79,7 @@ public class CU2PlatinumsModule : EverestModule
     public static bool hasPlatinum = false;
 
     public static string currentLobby = null;
-    public static string currentLevelSet = null;
+    public static string currentLevelSet = "";
     public static string currentMap = null;
     public static string currentMapClean = null;
 
@@ -167,10 +166,34 @@ public class CU2PlatinumsModule : EverestModule
                 reset();
                 inRun = false;
             }
+
             currentLobby = newLobby;
-            currentLevelSet = lobbyLevelSet;
             PacePingManager.SetCampaignName(currentMapClean, Dialog.CleanLevelSet(area.LevelSet));
+
+            if (currentLevelSet == "")
+            {
+                try
+                {
+                    CollabUtils2Integration.GetUnsortedCollabStats(SaveData.Instance, lobbyLevelSet);
+                    currentLevelSet = lobbyLevelSet;
+                }
+                catch
+                {
+                    currentLevelSet = null;
+                    Logger.Log(LogLevel.Info, "CU2Platinums", $"CU2 lobby level set does not match map level set");
+                }
+            }
+
         }
+        else
+        {
+            if (currentLevelSet == null)
+            {
+                currentLevelSet = area.LevelSet;
+                PlatinumJournal.OnPlatinumPickup();
+            }
+        }
+
         shouldUpdate = true;
 
         if (hasPlatinum)
@@ -647,7 +670,7 @@ public class CU2PlatinumsModule : EverestModule
         platEntity = null;
         platFollower = null;
         currentLobby = null;
-        currentLevelSet = null;
+        currentLevelSet = "";
         silverBerries = new List<IStrawberry>();
     }
 

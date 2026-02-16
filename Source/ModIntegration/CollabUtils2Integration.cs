@@ -59,7 +59,7 @@ public static class CollabUtils2Integration
     return (bool)(isHeartSide ?? false);
   }
 
-  private static List<AreaStats> GetUnsortedCollabStats(SaveData instance, string levelSet)
+  public static List<AreaStats> GetUnsortedCollabStats(SaveData instance, string levelSet)
   {
     string journalLevelSet = levelSet;
 
@@ -119,7 +119,7 @@ public static class CollabUtils2Integration
   }
 
   private const int MAPS_PER_PAGE = 12;
-  public static int MapsOnPage(OuiJournalPage page, OuiJournal journal, SaveData instance, out int firstIndexOnPage)
+  public static int MapsOnPage(OuiJournalPage page, OuiJournal journal, SaveData instance, string levelSet, out int firstIndexOnPage)
   {
     int firstProgressPage = FirstProgressPage(journal);
     if (firstProgressPage == -1)
@@ -130,7 +130,6 @@ public static class CollabUtils2Integration
 
     int i = page.PageIndex - firstProgressPage;
     firstIndexOnPage = MAPS_PER_PAGE * i;
-    string levelSet = journal.Overworld is null ? null : new DynData<Overworld>(journal.Overworld).Get<AreaData>("collabInGameForcedArea")?.LevelSet;
     int val = GetUnsortedCollabStats(instance, levelSet).Count - MAPS_PER_PAGE * i;
     return val > MAPS_PER_PAGE ? MAPS_PER_PAGE : val;
   }

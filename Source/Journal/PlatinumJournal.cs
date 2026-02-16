@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using Celeste.Mod.CU2Platinums.ModIntegration;
@@ -86,6 +87,8 @@ namespace Celeste.Mod.CU2Platinums.Journal
 
     public static void OnPlatinumPickup()
     {
+      if (CU2PlatinumsModule.currentLevelSet == null) return;
+
       SaveJournalSnapshot(CU2PlatinumsModule.currentLevelSet);
     }
 
@@ -168,9 +171,7 @@ namespace Celeste.Mod.CU2Platinums.Journal
     {
       List<AreaStats> areas;
 
-      string levelSet = journal.Overworld is null ? null : new DynData<Overworld>(journal.Overworld).Get<AreaData>("collabInGameForcedArea")?.LevelSet;
-
-      areas = CollabUtils2Integration.GetSortedCollabAreaStats(instance, levelSet);
+      areas = CollabUtils2Integration.GetSortedCollabAreaStats(instance, CU2PlatinumsModule.currentLevelSet);
       if (index >= areas.Count)
       {
         area = null;
@@ -185,6 +186,8 @@ namespace Celeste.Mod.CU2Platinums.Journal
     private static List<OuiJournalPage.Cell> UpdateEntry(
       List<OuiJournalPage.Cell> entries, AreaStats area, CustomAreaStats customAreaStats, bool isHeartside)
     {
+      if (CU2PlatinumsModule.currentLevelSet == null) return entries;
+
       AreaData areaData = AreaData.Get(area);
       AreaKey areaKey = areaData.ToKey();
       AreaModeStats areaModeStats = SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode];
@@ -279,6 +282,10 @@ namespace Celeste.Mod.CU2Platinums.Journal
         if (mapCompleted)
         {
           completedCell = new OuiJournalPage.IconCell(heartTexture);
+        }
+        else
+        {
+          completedCell = new OuiJournalPage.IconCell("dot");
         }
       }
       else
@@ -425,6 +432,8 @@ namespace Celeste.Mod.CU2Platinums.Journal
 
     private static void UpdateJournalData(OuiJournal journal)
     {
+      if (CU2PlatinumsModule.currentLevelSet == null) return;
+
       SaveData instance = SaveData.Instance;
       if (instance is null || JournalProgressPage is null)
         return;
@@ -442,7 +451,7 @@ namespace Celeste.Mod.CU2Platinums.Journal
       try
       {
         int firstIndexOnPage = 0;
-        int mapsOnThisCollabUtils2Page = CollabUtils2Integration.MapsOnPage(JournalProgressPage, journal, instance, out firstIndexOnPage);
+        int mapsOnThisCollabUtils2Page = CollabUtils2Integration.MapsOnPage(JournalProgressPage, journal, instance, CU2PlatinumsModule.currentLevelSet, out firstIndexOnPage);
 
         DynamicData journalProgressDynData = DynamicData.For(JournalProgressPage);
         OuiJournalPage.Table table = journalProgressDynData.Get<OuiJournalPage.Table>("table");
