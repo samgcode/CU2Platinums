@@ -423,8 +423,15 @@ public class CU2PlatinumsModule : EverestModule
 
     public static void onStoreStrawberries(Action<Leader> orig, Leader leader)
     {
-        Player player = leader.Entity.SceneAs<Level>().Tracker.GetEntity<Player>();
-        savePlat(leader.Entity.SceneAs<Level>().Session, player);
+        try
+        {
+            Player player = leader.Entity.SceneAs<Level>().Tracker.GetEntity<Player>();
+            savePlat(leader.Entity.SceneAs<Level>().Session, player);
+        }
+        catch
+        {
+            Logger.Log(LogLevel.Error, "CU2Platinums", $"Unable to get player");
+        }
 
         orig(leader);
     }
